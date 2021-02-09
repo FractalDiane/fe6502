@@ -1,9 +1,4 @@
 // program.rs
-use std::{fs::File, u8};
-use byteorder::{LittleEndian, ReadBytesExt};
-use num::FromPrimitive;
-
-use crate::opcodes::{Opcode};
 
 pub struct Program {
 	pub program_counter: u16,
@@ -49,7 +44,7 @@ impl Program {
 			flag_carry: false,
 			flag_break: false,
 
-			memory: vec![0; 65535],
+			memory: vec![0; std::u16::MAX as usize + 1],
 		}
 	}
 
@@ -66,7 +61,7 @@ impl Program {
 	}
 
 	pub fn brk(&self) {
-		println!("BREAK");
+		
 	}
 
 	pub fn stack_push(&mut self, value: u8) {
@@ -79,10 +74,4 @@ impl Program {
 		self.stack_pointer = self.stack_pointer.wrapping_add(1);
 		self.memory[ptr as usize]
 	}
-
-	/*pub fn fetch_byte(&mut self) {
-		let byte = self.file.read_u8().unwrap();
-		self.fetched_byte = byte;
-		self.program_counter += 1;
-	}*/
 }

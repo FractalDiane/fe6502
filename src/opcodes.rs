@@ -1,11 +1,13 @@
 // opcodes.rs
 
 use std::collections::HashMap;
-use crate::num_derive::FromPrimitive;
-use crate::addressing::AddressMode;
-use crate::instructions;
 
 use lazy_static::lazy_static;
+
+use crate::num_derive::FromPrimitive;
+use crate::addressing::AddressMode;
+use crate::program::Program;
+use crate::instructions;
 
 #[allow(non_camel_case_types)]
 #[derive(FromPrimitive, PartialEq, Eq, Hash)]
@@ -218,212 +220,220 @@ pub enum Opcode {
 	TYA_imp = 0x98,
 }
 
+type InstrFunc = fn(&mut Program, &AddressMode) -> ();
+
+pub struct InstructionData {
+	pub amode: AddressMode,
+	pub func: InstrFunc,
+}
+
 lazy_static! {
-	pub static ref ADDRESS_MODES: HashMap<Opcode, AddressMode> = {
+	pub static ref INSTRUCTION_DATA: HashMap<Opcode, InstructionData> = {
 		let mut map = HashMap::new();
 		
-		map.insert(Opcode::ADC_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::ADC_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::ADC_zpx ,  AddressMode::ZeropageX);
-		map.insert(Opcode::ADC_abs,  AddressMode::Absolute);
-		map.insert(Opcode::ADC_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::ADC_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::ADC_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::ADC_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::ADC_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_zpx ,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::ADC as InstrFunc});
+		map.insert(Opcode::ADC_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::ADC as InstrFunc});
 
-		map.insert(Opcode::AND_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::AND_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::AND_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::AND_abs,  AddressMode::Absolute);
-		map.insert(Opcode::AND_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::AND_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::AND_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::AND_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::AND_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::AND as InstrFunc});
+		map.insert(Opcode::AND_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::AND as InstrFunc});
 
-		map.insert(Opcode::ASL_acc,  AddressMode::Accumulator);
-		map.insert(Opcode::ASL_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::ASL_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::ASL_abs,  AddressMode::Absolute);
-		map.insert(Opcode::ASL_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::ASL_acc,  InstructionData{amode: AddressMode::Accumulator, func: instructions::ASL as InstrFunc});
+		map.insert(Opcode::ASL_zpg , InstructionData{amode: AddressMode::Zeropage, func: instructions::ASL as InstrFunc});
+		map.insert(Opcode::ASL_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::ASL as InstrFunc});
+		map.insert(Opcode::ASL_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::ASL as InstrFunc});
+		map.insert(Opcode::ASL_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::ASL as InstrFunc});
 
-		map.insert(Opcode::BCC_rel,  AddressMode::Relative);
+		map.insert(Opcode::BCC_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BCC as InstrFunc});
 
-		map.insert(Opcode::BCS_rel,  AddressMode::Relative);
+		map.insert(Opcode::BCS_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BCS as InstrFunc});
 
-		map.insert(Opcode::BEQ_rel,  AddressMode::Relative);
+		map.insert(Opcode::BEQ_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BEQ as InstrFunc});
 
-		map.insert(Opcode::BIT_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::BIT_abs,  AddressMode::Absolute);
+		map.insert(Opcode::BIT_zpg , InstructionData{amode: AddressMode::Zeropage, func: instructions::BIT as InstrFunc});
+		map.insert(Opcode::BIT_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::BIT as InstrFunc});
 
-		map.insert(Opcode::BMI_rel,  AddressMode::Relative);
+		map.insert(Opcode::BMI_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BMI as InstrFunc});
 
-		map.insert(Opcode::BNE_rel,  AddressMode::Relative);
+		map.insert(Opcode::BNE_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BNE as InstrFunc});
 
-		map.insert(Opcode::BPL_rel,  AddressMode::Relative);
+		map.insert(Opcode::BPL_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BPL as InstrFunc});
 
-		map.insert(Opcode::BRK_imp,  AddressMode::Implied);
+		map.insert(Opcode::BRK_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::BRK as InstrFunc});
 
-		map.insert(Opcode::BVC_rel,  AddressMode::Relative);
+		map.insert(Opcode::BVC_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BVC as InstrFunc});
 
-		map.insert(Opcode::BVS_rel,  AddressMode::Relative);
+		map.insert(Opcode::BVS_rel,  InstructionData{amode: AddressMode::Relative, func: instructions::BVS as InstrFunc});
 
-		map.insert(Opcode::CLC_imp,  AddressMode::Implied);
+		map.insert(Opcode::CLC_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::CLC as InstrFunc});
 
-		map.insert(Opcode::CLD_imp,  AddressMode::Implied);
+		map.insert(Opcode::CLD_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::CLD as InstrFunc});
 
-		map.insert(Opcode::CLI_imp,  AddressMode::Implied);
+		map.insert(Opcode::CLI_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::CLI as InstrFunc});
 
-		map.insert(Opcode::CLV_imp,  AddressMode::Implied);
+		map.insert(Opcode::CLV_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::CLV as InstrFunc});
 
-		map.insert(Opcode::CMP_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::CMP_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::CMP_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::CMP_abs,  AddressMode::Absolute);
-		map.insert(Opcode::CMP_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::CMP_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::CMP_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::CMP_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::CMP_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::CMP as InstrFunc});
+		map.insert(Opcode::CMP_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::CMP as InstrFunc});
 
-		map.insert(Opcode::CPX_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::CPX_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::CPX_abs,  AddressMode::Absolute);
+		map.insert(Opcode::CPX_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::CPX as InstrFunc});
+		map.insert(Opcode::CPX_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::CPX as InstrFunc});
+		map.insert(Opcode::CPX_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::CPX as InstrFunc});
 
-		map.insert(Opcode::CPY_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::CPY_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::CPY_abs,  AddressMode::Absolute);
+		map.insert(Opcode::CPY_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::CPY as InstrFunc});
+		map.insert(Opcode::CPY_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::CPY as InstrFunc});
+		map.insert(Opcode::CPY_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::CPY as InstrFunc});
 		
-		map.insert(Opcode::DEC_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::DEC_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::DEC_abs,  AddressMode::Absolute);
-		map.insert(Opcode::DEC_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::DEC_zpg , InstructionData{amode: AddressMode::Zeropage, func: instructions::DEC as InstrFunc});
+		map.insert(Opcode::DEC_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::DEC as InstrFunc});
+		map.insert(Opcode::DEC_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::DEC as InstrFunc});
+		map.insert(Opcode::DEC_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::DEC as InstrFunc});
 
-		map.insert(Opcode::DEX_imp,  AddressMode::Implied);
+		map.insert(Opcode::DEX_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::DEX as InstrFunc});
 
-		map.insert(Opcode::DEY_imp,  AddressMode::Implied);
+		map.insert(Opcode::DEY_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::DEY as InstrFunc});
 
-		map.insert(Opcode::EOR_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::EOR_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::EOR_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::EOR_abs,  AddressMode::Absolute);
-		map.insert(Opcode::EOR_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::EOR_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::INC_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::INC_abs,  AddressMode::Absolute);
-		map.insert(Opcode::INC_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::EOR_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::EOR as InstrFunc});
+		map.insert(Opcode::EOR_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::EOR as InstrFunc});
+		map.insert(Opcode::EOR_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::EOR as InstrFunc});
+		map.insert(Opcode::EOR_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::EOR as InstrFunc});
+		map.insert(Opcode::EOR_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::EOR as InstrFunc});
+		map.insert(Opcode::EOR_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::EOR as InstrFunc});
 
-		map.insert(Opcode::INX_imp,  AddressMode::Implied);
+		map.insert(Opcode::INC_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::INC as InstrFunc});
+		map.insert(Opcode::INC_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::INC as InstrFunc});
+		map.insert(Opcode::INC_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::INC as InstrFunc});
 
-		map.insert(Opcode::INY_imp,  AddressMode::Implied);
+		map.insert(Opcode::INX_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::INX as InstrFunc});
 
-		map.insert(Opcode::JMP_abs,  AddressMode::Absolute);
-		map.insert(Opcode::JMP_ind ,  AddressMode::Indirect);
+		map.insert(Opcode::INY_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::INY as InstrFunc});
 
-		map.insert(Opcode::JSR_abs,  AddressMode::Absolute);
+		map.insert(Opcode::JMP_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::JMP as InstrFunc});
+		map.insert(Opcode::JMP_ind ,  InstructionData{amode: AddressMode::Indirect, func: instructions::JMP as InstrFunc});
 
-		map.insert(Opcode::LDA_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::LDA_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::LDA_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::LDA_abs,  AddressMode::Absolute);
-		map.insert(Opcode::LDA_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::LDA_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::LDA_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::LDA_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::JSR_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::JSR as InstrFunc});
 
-		map.insert(Opcode::LDX_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::LDX_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::LDX_zpy,  AddressMode::ZeropageY);
-		map.insert(Opcode::LDX_abs,  AddressMode::Absolute);
-		map.insert(Opcode::LDX_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::LDA_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::LDA as InstrFunc});
+		map.insert(Opcode::LDA_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::LDA as InstrFunc});
 
-		map.insert(Opcode::LDY_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::LDY_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::LDY_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::LDY_abs,  AddressMode::Absolute);
-		map.insert(Opcode::LDY_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::LDX_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::LDX as InstrFunc});
+		map.insert(Opcode::LDX_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::LDX as InstrFunc});
+		map.insert(Opcode::LDX_zpy,  InstructionData{amode: AddressMode::ZeropageY, func: instructions::LDX as InstrFunc});
+		map.insert(Opcode::LDX_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::LDX as InstrFunc});
+		map.insert(Opcode::LDX_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::LDX as InstrFunc});
 
-		map.insert(Opcode::LSR_acc,  AddressMode::Accumulator);
-		map.insert(Opcode::LSR_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::LSR_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::LSR_abs,  AddressMode::Absolute);
-		map.insert(Opcode::LSR_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::LDY_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::LDY as InstrFunc});
+		map.insert(Opcode::LDY_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::LDY as InstrFunc});
+		map.insert(Opcode::LDY_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::LDY as InstrFunc});
+		map.insert(Opcode::LDY_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::LDY as InstrFunc});
+		map.insert(Opcode::LDY_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::LDY as InstrFunc});
 
-		map.insert(Opcode::NOP_imp,  AddressMode::Implied);
+		map.insert(Opcode::LSR_acc,  InstructionData{amode: AddressMode::Accumulator, func: instructions::LSR as InstrFunc});
+		map.insert(Opcode::LSR_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::LSR as InstrFunc});
+		map.insert(Opcode::LSR_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::LSR as InstrFunc});
+		map.insert(Opcode::LSR_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::LSR as InstrFunc});
+		map.insert(Opcode::LSR_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::LSR as InstrFunc});
 
-		map.insert(Opcode::ORA_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::ORA_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::ORA_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::ORA_abs,  AddressMode::Absolute);
-		map.insert(Opcode::ORA_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::ORA_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::ORA_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::ORA_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::NOP_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::NOP as InstrFunc});
 
-		map.insert(Opcode::PHA_imp,  AddressMode::Implied);
+		map.insert(Opcode::ORA_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::ORA as InstrFunc});
+		map.insert(Opcode::ORA_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::ORA as InstrFunc});
 
-		map.insert(Opcode::PHP_imp,  AddressMode::Implied);
+		map.insert(Opcode::PHA_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::PHA as InstrFunc});
 
-		map.insert(Opcode::PLA_imp,  AddressMode::Implied);
+		map.insert(Opcode::PHP_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::PHP as InstrFunc});
 
-		map.insert(Opcode::PLP_imp,  AddressMode::Implied);
+		map.insert(Opcode::PLA_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::PLA as InstrFunc});
 
-		map.insert(Opcode::ROL_acc,  AddressMode::Accumulator);
-		map.insert(Opcode::ROL_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::ROL_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::ROL_abs,  AddressMode::Absolute);
-		map.insert(Opcode::ROL_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::PLP_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::PLP as InstrFunc});
 
-		map.insert(Opcode::ROR_acc,  AddressMode::Accumulator);
-		map.insert(Opcode::ROR_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::ROR_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::ROR_abs,  AddressMode::Absolute);
-		map.insert(Opcode::ROR_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::ROL_acc,  InstructionData{amode: AddressMode::Accumulator, func: instructions::ROL as InstrFunc});
+		map.insert(Opcode::ROL_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::ROL as InstrFunc});
+		map.insert(Opcode::ROL_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::ROL as InstrFunc});
+		map.insert(Opcode::ROL_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::ROL as InstrFunc});
+		map.insert(Opcode::ROL_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::ROL as InstrFunc});
 
-		map.insert(Opcode::RTI_imp,  AddressMode::Implied);
+		map.insert(Opcode::ROR_acc,  InstructionData{amode: AddressMode::Accumulator, func: instructions::ROR as InstrFunc});
+		map.insert(Opcode::ROR_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::ROR as InstrFunc});
+		map.insert(Opcode::ROR_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::ROR as InstrFunc});
+		map.insert(Opcode::ROR_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::ROR as InstrFunc});
+		map.insert(Opcode::ROR_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::ROR as InstrFunc});
 
-		map.insert(Opcode::RTS_imp,  AddressMode::Implied);
+		map.insert(Opcode::RTI_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::RTI as InstrFunc});
 
-		map.insert(Opcode::SBC_imm ,  AddressMode::Immediate);
-		map.insert(Opcode::SBC_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::SBC_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::SBC_abs,  AddressMode::Absolute);
-		map.insert(Opcode::SBC_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::SBC_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::SBC_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::SBC_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::RTS_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::RTS as InstrFunc});
 
-		map.insert(Opcode::SEC_imp,  AddressMode::Implied);
+		map.insert(Opcode::SBC_imm ,  InstructionData{amode: AddressMode::Immediate, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::SBC as InstrFunc});
+		map.insert(Opcode::SBC_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::SBC as InstrFunc});
 
-		map.insert(Opcode::SED_imp,  AddressMode::Implied);
+		map.insert(Opcode::SEC_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::SEC as InstrFunc});
 
-		map.insert(Opcode::SEI_imp,  AddressMode::Implied);
+		map.insert(Opcode::SED_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::SED as InstrFunc});
 
-		map.insert(Opcode::STA_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::STA_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::STA_abs,  AddressMode::Absolute);
-		map.insert(Opcode::STA_abx,  AddressMode::AbsoluteX);
-		map.insert(Opcode::STA_aby,  AddressMode::AbsoluteY);
-		map.insert(Opcode::STA_idx,  AddressMode::IndirectX);
-		map.insert(Opcode::STA_idy,  AddressMode::IndirectY);
+		map.insert(Opcode::SEI_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::SEI as InstrFunc});
 
-		map.insert(Opcode::STX_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::STX_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::STX_abs,  AddressMode::Absolute);
+		map.insert(Opcode::STA_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_abx,  InstructionData{amode: AddressMode::AbsoluteX, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_aby,  InstructionData{amode: AddressMode::AbsoluteY, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_idx,  InstructionData{amode: AddressMode::IndirectX, func: instructions::STA as InstrFunc});
+		map.insert(Opcode::STA_idy,  InstructionData{amode: AddressMode::IndirectY, func: instructions::STA as InstrFunc});
 
-		map.insert(Opcode::STY_zpg ,  AddressMode::Zeropage);
-		map.insert(Opcode::STY_zpx,  AddressMode::ZeropageX);
-		map.insert(Opcode::STY_abs,  AddressMode::Absolute);
+		map.insert(Opcode::STX_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::STX as InstrFunc});
+		map.insert(Opcode::STX_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::STX as InstrFunc});
+		map.insert(Opcode::STX_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::STX as InstrFunc});
 
-		map.insert(Opcode::TAX_imp,  AddressMode::Implied);
+		map.insert(Opcode::STY_zpg ,  InstructionData{amode: AddressMode::Zeropage, func: instructions::STY as InstrFunc});
+		map.insert(Opcode::STY_zpx,  InstructionData{amode: AddressMode::ZeropageX, func: instructions::STY as InstrFunc});
+		map.insert(Opcode::STY_abs,  InstructionData{amode: AddressMode::Absolute, func: instructions::STY as InstrFunc});
+
+		map.insert(Opcode::TAX_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TAX as InstrFunc});
 		
-		map.insert(Opcode::TAY_imp,  AddressMode::Implied);
+		map.insert(Opcode::TAY_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TAY as InstrFunc});
 
-		map.insert(Opcode::TSX_imp,  AddressMode::Implied);
+		map.insert(Opcode::TSX_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TSX as InstrFunc});
 
-		map.insert(Opcode::TXA_imp,  AddressMode::Implied);
+		map.insert(Opcode::TXA_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TXA as InstrFunc});
 
-		map.insert(Opcode::TXS_imp,  AddressMode::Implied);
+		map.insert(Opcode::TXS_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TXS as InstrFunc});
 
-		map.insert(Opcode::TYA_imp,  AddressMode::Implied);
+		map.insert(Opcode::TYA_imp,  InstructionData{amode: AddressMode::Implied, func: instructions::TYA as InstrFunc});
 		
 		map
 	};

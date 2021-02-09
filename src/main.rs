@@ -13,7 +13,7 @@ mod program;
 use byteorder::{LittleEndian, ReadBytesExt};
 use program::Program;
 use num::FromPrimitive;
-use opcodes::{Opcode, ADDRESS_MODES};
+use opcodes::{Opcode, INSTRUCTION_DATA};
 use addressing::ADDRESS_FUNCS;
 
 fn main() {
@@ -22,24 +22,41 @@ fn main() {
 		process::exit(1);
 	}
 
+	// Load program into memory
 	let mut file = File::open(&args[1])
 					.expect(format!("Failed to open file {}", &args[1]).as_str());
 
 	let mut program = Program::new();
 
 	let origin = file.read_u16::<LittleEndian>().unwrap();
+	let mut i = 0;
 	loop {
-		let byte = file.read_u8();
-		match byte {
+		match file.read_u8() {
 			Ok(byte) => {
-				let opcode: Opcode = FromPrimitive::from_u8(byte).unwrap();
-				let amode = ADDRESS_MODES[&opcode];
-				let addr_func = ADDRESS_FUNCS[&amode];
-				addr_func(&file, &mut program);
+				program.set_memory(origin + i, byte);
+				i += 1;
 			},
 
 			Err(_) => { break; }
 		}
-		
+	}
+
+	program.program_counter = origin;
+
+	// Run program
+	println!("Running program from ${:x}", origin);
+	loop {
+		let byte = program.get_memory(program.program_counter);
+		let opcode: Opcode = FromPrimitive::from_u8(byte).unwrap();
+
+		let instr_data = &INSTRUCTION_DATA[&opcode];
+		let addr_func = ADDRESS_FUNCS[&instr_data.amode];
+		addr_func(&mut program);
+
+		(instr_data.func)(&mut program, &instr_data.amode);
+		if program.flag_break {
+			println!("BREAK at ${:x}", program.program_counter);
+			return;
+		}
 	}
 }
