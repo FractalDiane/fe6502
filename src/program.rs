@@ -18,6 +18,7 @@ pub struct Program {
 	pub flag_interrupt: bool,
 	pub flag_zero: bool,
 	pub flag_carry: bool,
+	pub flag_break: bool,
 
 	pub fetched_byte: u8,
 	pub abs_address: u16,
@@ -46,6 +47,7 @@ impl Program {
 			flag_interrupt: false,
 			flag_zero: false,
 			flag_carry: false,
+			flag_break: false,
 
 			memory: vec![0; 65535],
 		}
@@ -61,6 +63,21 @@ impl Program {
 
 	pub fn advance_counter(&mut self) {
 		self.program_counter += 1;
+	}
+
+	pub fn brk(&self) {
+		println!("BREAK");
+	}
+
+	pub fn stack_push(&mut self, value: u8) {
+		self.memory[self.stack_pointer as usize] = value;
+		self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+	}
+
+	pub fn stack_pull(&mut self) -> u8 {
+		let ptr = self.stack_pointer;
+		self.stack_pointer = self.stack_pointer.wrapping_add(1);
+		self.memory[ptr as usize]
 	}
 
 	/*pub fn fetch_byte(&mut self) {
