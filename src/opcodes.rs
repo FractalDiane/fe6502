@@ -2,85 +2,10 @@
 
 use std::collections::HashMap;
 use crate::num_derive::FromPrimitive;
+use crate::addressing::AddressMode;
+use crate::instructions;
 
 use lazy_static::lazy_static;
-
-pub enum AddressMode {
-	Implied,
-	Accumulator,
-	Relative,
-	Immediate,
-	Zeropage,
-	ZeropageX,
-	ZeropageY,
-	Absolute,
-	AbsoluteX,
-	AbsoluteY,
-	Indirect,
-	IndirectX,
-	IndirectY,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(FromPrimitive, PartialEq)]
-pub enum Instruction {
-	ADC,
-	AND,
-	ASL,
-	BCC,
-	BCS,
-	BEQ,
-	BIT,
-	BMI,
-	BNE,
-	BPL,
-	BRK,
-	BVC,
-	BVS,
-	CLC,
-	CLD,
-	CLI,
-	CLV,
-	CMP,
-	CPX,
-	CPY,
-	DEC,
-	DEX,
-	DEY,
-	EOR,
-	INC,
-	INX,
-	INY,
-	JMP,
-	JSR,
-	LDA,
-	LDX,
-	LDY,
-	LSR,
-	NOP,
-	ORA,
-	PHA,
-	PHP,
-	PLA,
-	PLP,
-	ROL,
-	ROR,
-	RTI,
-	RTS,
-	SBC,
-	SEC,
-	SED,
-	SEI,
-	STA,
-	STX,
-	STY,
-	TAX,
-	TAY,
-	TSX,
-	TXA,
-	TXS,
-	TYA,
-}
 
 #[allow(non_camel_case_types)]
 #[derive(FromPrimitive, PartialEq, Eq, Hash)]
@@ -294,212 +219,212 @@ pub enum Opcode {
 }
 
 lazy_static! {
-	pub static ref OPERAND_COUNTS: HashMap<Opcode, u8> = {
+	pub static ref ADDRESS_MODES: HashMap<Opcode, AddressMode> = {
 		let mut map = HashMap::new();
-
-		map.insert(Opcode::ADC_imm , 1);
-		map.insert(Opcode::ADC_zpg , 1);
-		map.insert(Opcode::ADC_zpx , 1);
-		map.insert(Opcode::ADC_abs , 1);
-		map.insert(Opcode::ADC_abx , 1);
-		map.insert(Opcode::ADC_aby , 1);
-		map.insert(Opcode::ADC_idx , 1);
-		map.insert(Opcode::ADC_idy , 1);
-
-		map.insert(Opcode::AND_imm , 1);
-		map.insert(Opcode::AND_zpg , 1);
-		map.insert(Opcode::AND_zpx , 1);
-		map.insert(Opcode::AND_abs , 1);
-		map.insert(Opcode::AND_abx , 1);
-		map.insert(Opcode::AND_aby , 1);
-		map.insert(Opcode::AND_idx , 1);
-		map.insert(Opcode::AND_idy , 1);
-
-		map.insert(Opcode::ASL_acc , 1);
-		map.insert(Opcode::ASL_zpg , 1);
-		map.insert(Opcode::ASL_zpx , 1);
-		map.insert(Opcode::ASL_abs , 1);
-		map.insert(Opcode::ASL_abx , 1);
-
-		map.insert(Opcode::BCC_rel , 1);
-
-		map.insert(Opcode::BCS_rel , 1);
-
-		map.insert(Opcode::BEQ_rel , 1);
-
-		map.insert(Opcode::BIT_zpg , 1);
-		map.insert(Opcode::BIT_abs , 1);
-
-		map.insert(Opcode::BMI_rel , 1);
-
-		map.insert(Opcode::BNE_rel , 1);
-
-		map.insert(Opcode::BPL_rel , 1);
-
-		map.insert(Opcode::BRK_imp , 1);
-
-		map.insert(Opcode::BVC_rel , 1);
-
-		map.insert(Opcode::BVS_rel , 1);
-
-		map.insert(Opcode::CLC_imp , 1);
-
-		map.insert(Opcode::CLD_imp , 1);
-
-		map.insert(Opcode::CLI_imp , 1);
-
-		map.insert(Opcode::CLV_imp , 1);
-
-		map.insert(Opcode::CMP_imm , 1);
-		map.insert(Opcode::CMP_zpg , 1);
-		map.insert(Opcode::CMP_zpx , 1);
-		map.insert(Opcode::CMP_abs , 1);
-		map.insert(Opcode::CMP_abx , 1);
-		map.insert(Opcode::CMP_aby , 1);
-		map.insert(Opcode::CMP_idx , 1);
-		map.insert(Opcode::CMP_idy , 1);
-
-		map.insert(Opcode::CPX_imm , 1);
-		map.insert(Opcode::CPX_zpg , 1);
-		map.insert(Opcode::CPX_abs , 1);
-
-		map.insert(Opcode::CPY_imm , 1);
-		map.insert(Opcode::CPY_zpg , 1);
-		map.insert(Opcode::CPY_abs , 1);
 		
-		map.insert(Opcode::DEC_zpg , 1);
-		map.insert(Opcode::DEC_zpx , 1);
-		map.insert(Opcode::DEC_abs , 1);
-		map.insert(Opcode::DEC_abx , 1);
+		map.insert(Opcode::ADC_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::ADC_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::ADC_zpx ,  AddressMode::ZeropageX);
+		map.insert(Opcode::ADC_abs,  AddressMode::Absolute);
+		map.insert(Opcode::ADC_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::ADC_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::ADC_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::ADC_idy,  AddressMode::IndirectY);
 
-		map.insert(Opcode::DEX_imp , 1);
+		map.insert(Opcode::AND_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::AND_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::AND_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::AND_abs,  AddressMode::Absolute);
+		map.insert(Opcode::AND_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::AND_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::AND_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::AND_idy,  AddressMode::IndirectY);
 
-		map.insert(Opcode::DEY_imp , 1);
+		map.insert(Opcode::ASL_acc,  AddressMode::Accumulator);
+		map.insert(Opcode::ASL_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::ASL_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::ASL_abs,  AddressMode::Absolute);
+		map.insert(Opcode::ASL_abx,  AddressMode::AbsoluteX);
 
-		map.insert(Opcode::EOR_imm , 1);
-		map.insert(Opcode::EOR_zpg , 1);
-		map.insert(Opcode::EOR_zpx , 1);
-		map.insert(Opcode::EOR_abs , 1);
-		map.insert(Opcode::EOR_abx , 1);
-		map.insert(Opcode::EOR_aby , 1);
-		map.insert(Opcode::INC_zpx , 1);
-		map.insert(Opcode::INC_abs , 1);
-		map.insert(Opcode::INC_abx , 1);
+		map.insert(Opcode::BCC_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::INX_imp , 1);
+		map.insert(Opcode::BCS_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::INY_imp , 1);
+		map.insert(Opcode::BEQ_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::JMP_abs , 1);
-		map.insert(Opcode::JMP_ind , 1);
+		map.insert(Opcode::BIT_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::BIT_abs,  AddressMode::Absolute);
 
-		map.insert(Opcode::JSR_abs , 1);
+		map.insert(Opcode::BMI_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::LDA_imm , 1);
-		map.insert(Opcode::LDA_zpg , 1);
-		map.insert(Opcode::LDA_zpx , 1);
-		map.insert(Opcode::LDA_abs , 1);
-		map.insert(Opcode::LDA_abx , 1);
-		map.insert(Opcode::LDA_aby , 1);
-		map.insert(Opcode::LDA_idx , 1);
-		map.insert(Opcode::LDA_idy , 1);
+		map.insert(Opcode::BNE_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::LDX_imm , 1);
-		map.insert(Opcode::LDX_zpg , 1);
-		map.insert(Opcode::LDX_zpy , 1);
-		map.insert(Opcode::LDX_abs , 1);
-		map.insert(Opcode::LDX_aby , 1);
+		map.insert(Opcode::BPL_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::LDY_imm , 1);
-		map.insert(Opcode::LDY_zpg , 1);
-		map.insert(Opcode::LDY_zpx , 1);
-		map.insert(Opcode::LDY_abs , 1);
-		map.insert(Opcode::LDY_abx , 1);
+		map.insert(Opcode::BRK_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::LSR_acc , 1);
-		map.insert(Opcode::LSR_zpg , 1);
-		map.insert(Opcode::LSR_zpx , 1);
-		map.insert(Opcode::LSR_abs , 1);
-		map.insert(Opcode::LSR_abx , 1);
+		map.insert(Opcode::BVC_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::NOP_imp , 1);
+		map.insert(Opcode::BVS_rel,  AddressMode::Relative);
 
-		map.insert(Opcode::ORA_imm , 1);
-		map.insert(Opcode::ORA_zpg , 1);
-		map.insert(Opcode::ORA_zpx , 1);
-		map.insert(Opcode::ORA_abs , 1);
-		map.insert(Opcode::ORA_abx , 1);
-		map.insert(Opcode::ORA_aby , 1);
-		map.insert(Opcode::ORA_idx , 1);
-		map.insert(Opcode::ORA_idy , 1);
+		map.insert(Opcode::CLC_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::PHA_imp , 1);
+		map.insert(Opcode::CLD_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::PHP_imp , 1);
+		map.insert(Opcode::CLI_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::PLA_imp , 1);
+		map.insert(Opcode::CLV_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::PLP_imp , 1);
+		map.insert(Opcode::CMP_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::CMP_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::CMP_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::CMP_abs,  AddressMode::Absolute);
+		map.insert(Opcode::CMP_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::CMP_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::CMP_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::CMP_idy,  AddressMode::IndirectY);
 
-		map.insert(Opcode::ROL_acc , 1);
-		map.insert(Opcode::ROL_zpg , 1);
-		map.insert(Opcode::ROL_zpx , 1);
-		map.insert(Opcode::ROL_abs , 1);
-		map.insert(Opcode::ROL_abx , 1);
+		map.insert(Opcode::CPX_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::CPX_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::CPX_abs,  AddressMode::Absolute);
 
-		map.insert(Opcode::ROR_acc , 1);
-		map.insert(Opcode::ROR_zpg , 1);
-		map.insert(Opcode::ROR_zpx , 1);
-		map.insert(Opcode::ROR_abs , 1);
-		map.insert(Opcode::ROR_abx , 1);
-
-		map.insert(Opcode::RTI_imp , 1);
-
-		map.insert(Opcode::RTS_imp , 1);
-
-		map.insert(Opcode::SBC_imm , 1);
-		map.insert(Opcode::SBC_zpg , 1);
-		map.insert(Opcode::SBC_zpx , 1);
-		map.insert(Opcode::SBC_abs , 1);
-		map.insert(Opcode::SBC_abx , 1);
-		map.insert(Opcode::SBC_aby , 1);
-		map.insert(Opcode::SBC_idx , 1);
-		map.insert(Opcode::SBC_idy , 1);
-
-		map.insert(Opcode::SEC_imp , 1);
-
-		map.insert(Opcode::SED_imp , 1);
-
-		map.insert(Opcode::SEI_imp , 1);
-
-		map.insert(Opcode::STA_zpg , 1);
-		map.insert(Opcode::STA_zpx , 1);
-		map.insert(Opcode::STA_abs , 1);
-		map.insert(Opcode::STA_abx , 1);
-		map.insert(Opcode::STA_aby , 1);
-		map.insert(Opcode::STA_idx , 1);
-		map.insert(Opcode::STA_idy , 1);
-
-		map.insert(Opcode::STX_zpg , 1);
-		map.insert(Opcode::STX_zpx , 1);
-		map.insert(Opcode::STX_abs , 1);
-
-		map.insert(Opcode::STY_zpg , 1);
-		map.insert(Opcode::STY_zpx , 1);
-		map.insert(Opcode::STY_abs , 1);
-
-		map.insert(Opcode::TAX_imp , 1);
+		map.insert(Opcode::CPY_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::CPY_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::CPY_abs,  AddressMode::Absolute);
 		
-		map.insert(Opcode::TAY_imp , 1);
+		map.insert(Opcode::DEC_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::DEC_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::DEC_abs,  AddressMode::Absolute);
+		map.insert(Opcode::DEC_abx,  AddressMode::AbsoluteX);
 
-		map.insert(Opcode::TSX_imp , 1);
+		map.insert(Opcode::DEX_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::TXA_imp , 1);
+		map.insert(Opcode::DEY_imp,  AddressMode::Implied);
 
-		map.insert(Opcode::TXS_imp , 1);
+		map.insert(Opcode::EOR_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::EOR_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::EOR_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::EOR_abs,  AddressMode::Absolute);
+		map.insert(Opcode::EOR_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::EOR_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::INC_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::INC_abs,  AddressMode::Absolute);
+		map.insert(Opcode::INC_abx,  AddressMode::AbsoluteX);
 
-		map.insert(Opcode::TYA_imp , 1);
+		map.insert(Opcode::INX_imp,  AddressMode::Implied);
 
+		map.insert(Opcode::INY_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::JMP_abs,  AddressMode::Absolute);
+		map.insert(Opcode::JMP_ind ,  AddressMode::Indirect);
+
+		map.insert(Opcode::JSR_abs,  AddressMode::Absolute);
+
+		map.insert(Opcode::LDA_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::LDA_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::LDA_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::LDA_abs,  AddressMode::Absolute);
+		map.insert(Opcode::LDA_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::LDA_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::LDA_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::LDA_idy,  AddressMode::IndirectY);
+
+		map.insert(Opcode::LDX_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::LDX_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::LDX_zpy,  AddressMode::ZeropageY);
+		map.insert(Opcode::LDX_abs,  AddressMode::Absolute);
+		map.insert(Opcode::LDX_aby,  AddressMode::AbsoluteY);
+
+		map.insert(Opcode::LDY_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::LDY_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::LDY_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::LDY_abs,  AddressMode::Absolute);
+		map.insert(Opcode::LDY_abx,  AddressMode::AbsoluteX);
+
+		map.insert(Opcode::LSR_acc,  AddressMode::Accumulator);
+		map.insert(Opcode::LSR_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::LSR_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::LSR_abs,  AddressMode::Absolute);
+		map.insert(Opcode::LSR_abx,  AddressMode::AbsoluteX);
+
+		map.insert(Opcode::NOP_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::ORA_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::ORA_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::ORA_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::ORA_abs,  AddressMode::Absolute);
+		map.insert(Opcode::ORA_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::ORA_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::ORA_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::ORA_idy,  AddressMode::IndirectY);
+
+		map.insert(Opcode::PHA_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::PHP_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::PLA_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::PLP_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::ROL_acc,  AddressMode::Accumulator);
+		map.insert(Opcode::ROL_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::ROL_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::ROL_abs,  AddressMode::Absolute);
+		map.insert(Opcode::ROL_abx,  AddressMode::AbsoluteX);
+
+		map.insert(Opcode::ROR_acc,  AddressMode::Accumulator);
+		map.insert(Opcode::ROR_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::ROR_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::ROR_abs,  AddressMode::Absolute);
+		map.insert(Opcode::ROR_abx,  AddressMode::AbsoluteX);
+
+		map.insert(Opcode::RTI_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::RTS_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::SBC_imm ,  AddressMode::Immediate);
+		map.insert(Opcode::SBC_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::SBC_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::SBC_abs,  AddressMode::Absolute);
+		map.insert(Opcode::SBC_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::SBC_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::SBC_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::SBC_idy,  AddressMode::IndirectY);
+
+		map.insert(Opcode::SEC_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::SED_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::SEI_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::STA_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::STA_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::STA_abs,  AddressMode::Absolute);
+		map.insert(Opcode::STA_abx,  AddressMode::AbsoluteX);
+		map.insert(Opcode::STA_aby,  AddressMode::AbsoluteY);
+		map.insert(Opcode::STA_idx,  AddressMode::IndirectX);
+		map.insert(Opcode::STA_idy,  AddressMode::IndirectY);
+
+		map.insert(Opcode::STX_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::STX_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::STX_abs,  AddressMode::Absolute);
+
+		map.insert(Opcode::STY_zpg ,  AddressMode::Zeropage);
+		map.insert(Opcode::STY_zpx,  AddressMode::ZeropageX);
+		map.insert(Opcode::STY_abs,  AddressMode::Absolute);
+
+		map.insert(Opcode::TAX_imp,  AddressMode::Implied);
+		
+		map.insert(Opcode::TAY_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::TSX_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::TXA_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::TXS_imp,  AddressMode::Implied);
+
+		map.insert(Opcode::TYA_imp,  AddressMode::Implied);
+		
 		map
 	};
 }
