@@ -48,6 +48,8 @@ fn main() {
 	// Run program
 	println!("Running program from ${:x}", origin);
 	loop {
+		let addr = program.program_counter;
+
 		let byte = program.get_memory(program.program_counter);
 		program.advance_counter();
 		let opcode: Opcode = FromPrimitive::from_u8(byte).unwrap();
@@ -58,7 +60,7 @@ fn main() {
 
 		{
 			let opcode_str = opcode.to_string();
-			let mut string = format!("${:x}: {}", program.program_counter, &opcode_str[0..3]);
+			let mut string = format!("${:x}: {}", addr, &opcode_str[0..3]);
 			match instr_data.amode {
 				AddressMode::Accumulator => {
 					string += " A";
@@ -95,7 +97,7 @@ fn main() {
 
 		(instr_data.func)(&mut program, &instr_data.amode);
 		if program.flag_break {
-			println!("BREAK at ${:x}", program.program_counter);
+			println!("BREAK at ${:x}", addr);
 			return;
 		}
 	}

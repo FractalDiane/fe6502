@@ -65,6 +65,7 @@ pub fn addr_implied(_program: &mut Program) {
 pub fn addr_relative_immediate(program: &mut Program) {
 	let byte = fetch_byte(program);
 	program.fetched_byte = byte;
+	program.rel_address = byte as i8;
 }
 
 pub fn addr_zeropage(program: &mut Program) {
