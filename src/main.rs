@@ -11,12 +11,12 @@ mod addressing;
 mod opcodes;
 mod instructions;
 mod program;
+mod console_colors;
 use byteorder::{LittleEndian, ReadBytesExt};
 use program::Program;
 use num::FromPrimitive;
 use opcodes::{Opcode, INSTRUCTION_DATA};
 use addressing::{AddressMode, ADDRESS_FUNCS};
-
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -60,7 +60,7 @@ fn main() {
 
 		{
 			let opcode_str = opcode.to_string();
-			let mut string = format!("${:x}: {}", addr, &opcode_str[0..3]);
+			let mut string = format!("${:x}: {}{}{}", addr, con_yellow!(), &opcode_str[0..3], con_green!());
 			match instr_data.amode {
 				AddressMode::Accumulator => {
 					string += " A";
@@ -91,8 +91,19 @@ fn main() {
 				},
 				_ => {}
 			}
+
+			println!("{}{}", string, con_reset!());
+
+			let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
 			
-			println!("{}", string);
+			println!("A    X    Y     N V B D I Z C");
+			println!("{:<5}{:<5}{:<5} {} {} {} {} {} {} {}\n",
+				program.reg_a, program.reg_x, program.reg_y,
+				symbols[program.flag_negative as usize], symbols[program.flag_overflow as usize],
+				symbols[program.flag_break as usize], symbols[program.flag_decimal as usize],
+				symbols[program.flag_interrupt as usize], symbols[program.flag_zero as usize],
+				symbols[program.flag_carry as usize]
+			);
 		}
 
 		(instr_data.func)(&mut program, &instr_data.amode);

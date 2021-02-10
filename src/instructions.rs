@@ -6,7 +6,8 @@ use crate::addressing::AddressMode;
 use crate::addressing::make_u16;
 
 fn branch(program: &mut Program) {
-	program.program_counter = program.program_counter.wrapping_add(program.rel_address as u16);
+	program.abs_address = program.program_counter.wrapping_add(program.rel_address as u16);
+	program.program_counter = program.abs_address;
 }
 
 // =============================================================
@@ -24,7 +25,7 @@ pub fn ADC(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = result;
 
 	program.flag_zero = program.reg_a == 0;
-	program.flag_negative = (program.reg_a as i8) < 0;
+	program.flag_negative = program.reg_a & 0x80 != 0;
 	program.flag_carry = result < prev;
 	program.flag_overflow = (result as i8).signum() != (prev as i8).signum();
 }
@@ -34,7 +35,7 @@ pub fn AND(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = result;
 
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 }
 
 pub fn ASL(program: &mut Program, amode: &AddressMode) {
@@ -52,7 +53,7 @@ pub fn ASL(program: &mut Program, amode: &AddressMode) {
 	};
 
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 	program.flag_carry = result < prev;
 }
 
@@ -168,21 +169,21 @@ pub fn DEC(program: &mut Program, _amode: &AddressMode) {
 	result = result.wrapping_sub(1);
 	program.set_memory(program.abs_address, result);
 
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 	program.flag_zero = result == 0;
 }
 
 pub fn DEX(program: &mut Program, _amode: &AddressMode) {
 	program.reg_x = program.reg_x.wrapping_sub(1);
 	
-	program.flag_negative = (program.reg_x as i8) < 0;
+	program.flag_negative = program.reg_x & 0x80 != 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn DEY(program: &mut Program, _amode: &AddressMode) {
 	program.reg_y = program.reg_y.wrapping_sub(1);
 	
-	program.flag_negative = (program.reg_y as i8) < 0;
+	program.flag_negative = program.reg_y & 0x80 != 0;
 	program.flag_zero = program.reg_y == 0;
 }
 
@@ -191,7 +192,7 @@ pub fn EOR(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = result;
 	
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 }
 
 pub fn INC(program: &mut Program, _amode: &AddressMode) {
@@ -199,21 +200,21 @@ pub fn INC(program: &mut Program, _amode: &AddressMode) {
 	result = result.wrapping_add(1);
 	program.set_memory(program.abs_address, result);
 
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 	program.flag_zero = result == 0;
 }
 
 pub fn INX(program: &mut Program, _amode: &AddressMode) {
 	program.reg_x = program.reg_x.wrapping_add(1);
 
-	program.flag_negative = (program.reg_x as i8) < 0;
+	program.flag_negative = program.reg_x & 0x80 != 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn INY(program: &mut Program, _amode: &AddressMode) {
 	program.reg_y = program.reg_y.wrapping_add(1);
 
-	program.flag_negative = (program.reg_y as i8) < 0;
+	program.flag_negative = program.reg_y & 0x80 != 0;
 	program.flag_zero = program.reg_y == 0;
 }
 
@@ -232,21 +233,21 @@ pub fn LDA(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = program.fetched_byte;
 
 	program.flag_zero = program.fetched_byte == 0;
-	program.flag_negative = (program.fetched_byte as i8) < 0;
+	program.flag_negative = program.fetched_byte & 0x80 != 0;
 }
 
 pub fn LDX(program: &mut Program, _amode: &AddressMode) {
 	program.reg_x = program.fetched_byte;
 
 	program.flag_zero = program.fetched_byte == 0;
-	program.flag_negative = (program.fetched_byte as i8) < 0;
+	program.flag_negative = program.fetched_byte & 0x80 != 0;
 }
 
 pub fn LDY(program: &mut Program, _amode: &AddressMode) {
 	program.reg_y = program.fetched_byte;
 
 	program.flag_zero = program.fetched_byte == 0;
-	program.flag_negative = (program.fetched_byte as i8) < 0;
+	program.flag_negative = program.fetched_byte & 0x80 != 0;
 }
 
 pub fn LSR(program: &mut Program, amode: &AddressMode) {
@@ -277,7 +278,7 @@ pub fn ORA(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = result;
 	
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 }
 
 pub fn PHA(program: &mut Program, _amode: &AddressMode) {
@@ -328,7 +329,7 @@ pub fn ROL(program: &mut Program, amode: &AddressMode) {
 	};
 
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 	program.flag_carry = result < prev;
 }
 
@@ -347,7 +348,7 @@ pub fn ROR(program: &mut Program, amode: &AddressMode) {
 	};
 
 	program.flag_zero = result == 0;
-	program.flag_negative = (result as i8) < 0;
+	program.flag_negative = result & 0x80 != 0;
 	program.flag_carry = result > prev;
 }
 
@@ -377,7 +378,7 @@ pub fn SBC(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = result;
 
 	program.flag_zero = program.reg_a == 0;
-	program.flag_negative = (program.reg_a as i8) < 0;
+	program.flag_negative = program.reg_a & 0x80 != 0;
 	program.flag_carry = result < prev;
 	program.flag_overflow = (result as i8).signum() != (prev as i8).signum();
 }
@@ -409,28 +410,28 @@ pub fn STY(program: &mut Program, _amode: &AddressMode) {
 pub fn TAX(program: &mut Program, _amode: &AddressMode) {
 	program.reg_x = program.reg_a;
 
-	program.flag_negative = (program.reg_x as i8) < 0;
+	program.flag_negative = program.reg_a & 0x80 != 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn TAY(program: &mut Program, _amode: &AddressMode) {
 	program.reg_y = program.reg_a;
 
-	program.flag_negative = (program.reg_y as i8) < 0;
+	program.flag_negative = program.reg_y & 0x80 != 0;
 	program.flag_zero = program.reg_y == 0;
 }
 
 pub fn TSX(program: &mut Program, _amode: &AddressMode) {
 	program.reg_x = program.stack_pointer;
 
-	program.flag_negative = (program.reg_x as i8) < 0;
+	program.flag_negative = program.reg_x & 0x80 != 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn TXA(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = program.reg_x;
 
-	program.flag_negative = (program.reg_a as i8) < 0;
+	program.flag_negative = program.reg_a & 0x80 != 0;
 	program.flag_zero = program.reg_a == 0;
 }
 
@@ -441,6 +442,6 @@ pub fn TXS(program: &mut Program, _amode: &AddressMode) {
 pub fn TYA(program: &mut Program, _amode: &AddressMode) {
 	program.reg_a = program.reg_y;
 
-	program.flag_negative = (program.reg_a as i8) < 0;
+	program.flag_negative = program.reg_a & 0x80 != 0;
 	program.flag_zero = program.reg_a == 0;
 }

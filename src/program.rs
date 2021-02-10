@@ -62,10 +62,6 @@ impl Program {
 		self.program_counter += 1;
 	}
 
-	pub fn brk(&self) {
-		
-	}
-
 	pub fn stack_push(&mut self, value: u8) {
 		self.memory[self.stack_pointer as usize] = value;
 		self.stack_pointer = self.stack_pointer.wrapping_sub(1);
