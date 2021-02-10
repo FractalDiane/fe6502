@@ -1,6 +1,7 @@
 extern crate num;
 extern crate num_derive;
 extern crate lazy_static;
+extern crate strum_macros;
 
 use std::fs::File;
 use std::{env, process};
@@ -14,7 +15,8 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use program::Program;
 use num::FromPrimitive;
 use opcodes::{Opcode, INSTRUCTION_DATA};
-use addressing::ADDRESS_FUNCS;
+use addressing::{AddressMode, ADDRESS_FUNCS};
+
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -47,11 +49,49 @@ fn main() {
 	println!("Running program from ${:x}", origin);
 	loop {
 		let byte = program.get_memory(program.program_counter);
+		program.advance_counter();
 		let opcode: Opcode = FromPrimitive::from_u8(byte).unwrap();
-
+		
 		let instr_data = &INSTRUCTION_DATA[&opcode];
 		let addr_func = ADDRESS_FUNCS[&instr_data.amode];
 		addr_func(&mut program);
+
+		{
+			let opcode_str = opcode.to_string();
+			let mut string = format!("${:x}: {}", program.program_counter, &opcode_str[0..3]);
+			match instr_data.amode {
+				AddressMode::Accumulator => {
+					string += " A";
+				},
+				AddressMode::Immediate => {
+					string += format!(" #${:x}", program.fetched_byte).as_str();
+				},
+				AddressMode::Absolute | AddressMode::Zeropage => {
+					string += format!(" ${:x}", program.abs_address).as_str();
+				},
+				AddressMode::AbsoluteX | AddressMode::ZeropageX => {
+					string += format!(" ${:x},X", program.abs_address).as_str();
+				},
+				AddressMode::AbsoluteY | AddressMode::ZeropageY => {
+					string += format!(" ${:x},Y", program.abs_address).as_str();
+				},
+				AddressMode::Relative => {
+					string += format!(" ${:x}", program.program_counter.wrapping_add(program.rel_address as u16)).as_str();
+				},
+				AddressMode::Indirect => {
+					string += format!(" (${:x})", program.ind_address).as_str();
+				},
+				AddressMode::IndirectX => {
+					string += format!(" (${:x},X)", program.ind_address).as_str();
+				},
+				AddressMode::IndirectY => {
+					string += format!(" (${:x}),Y", program.ind_address).as_str();
+				},
+				_ => {}
+			}
+			
+			println!("{}", string);
+		}
 
 		(instr_data.func)(&mut program, &instr_data.amode);
 		if program.flag_break {

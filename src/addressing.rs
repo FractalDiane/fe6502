@@ -111,6 +111,7 @@ pub fn addr_absolute_y(program: &mut Program) {
 
 pub fn addr_indirect(program: &mut Program) {
 	let byte = fetch_byte(program);
+	program.ind_address = byte as u16;
 	let lo = program.get_memory(byte as u16);
 	let hi = program.get_memory(byte as u16 + 1);
 	let addr = make_u16(lo, hi);
@@ -120,6 +121,7 @@ pub fn addr_indirect(program: &mut Program) {
 
 pub fn addr_x_indirect(program: &mut Program) {
 	let byte = fetch_byte(program);
+	program.ind_address = byte as u16;
 	let lo = program.get_memory(byte as u16 + program.reg_x as u16);
 	let hi = program.get_memory(byte as u16 + 1 + program.reg_x as u16);
 	let addr = make_u16(lo, hi);
@@ -129,6 +131,7 @@ pub fn addr_x_indirect(program: &mut Program) {
 
 pub fn addr_indirect_y(program: &mut Program) {
 	let byte = fetch_byte(program);
+	program.ind_address = byte as u16;
 	let lo = program.get_memory(byte as u16);
 	let hi = program.get_memory(byte as u16 + 1);
 	let addr = make_u16(lo, hi);

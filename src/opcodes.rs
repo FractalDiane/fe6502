@@ -1,6 +1,8 @@
 // opcodes.rs
 
 use std::collections::HashMap;
+//use std::string::ToString;
+use strum_macros;
 
 use lazy_static::lazy_static;
 
@@ -10,7 +12,7 @@ use crate::program::Program;
 use crate::instructions;
 
 #[allow(non_camel_case_types)]
-#[derive(FromPrimitive, PartialEq, Eq, Hash)]
+#[derive(FromPrimitive, PartialEq, Eq, Hash, strum_macros::ToString)]
 pub enum Opcode {
 	ADC_imm = 0x69,
 	ADC_zpg = 0x65,

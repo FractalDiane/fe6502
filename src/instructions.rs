@@ -57,18 +57,21 @@ pub fn ASL(program: &mut Program, amode: &AddressMode) {
 }
 
 pub fn BCC(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if !program.flag_carry {
 		branch(program);
 	}
 }
 
 pub fn BCS(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if program.flag_carry {
 		branch(program);
 	}
 }
 
 pub fn BEQ(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if program.flag_zero {
 		branch(program);
 	}
@@ -85,18 +88,21 @@ pub fn BIT(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn BMI(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if program.flag_negative {
 		branch(program);
 	}
 }
 
 pub fn BNE(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if !program.flag_zero {
 		branch(program);
 	}
 }
 
 pub fn BPL(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if !program.flag_negative {
 		branch(program);
 	}
@@ -108,12 +114,14 @@ pub fn BRK(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn BVC(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if !program.flag_overflow {
 		branch(program);
 	}
 }
 
 pub fn BVS(program: &mut Program, _amode: &AddressMode) {
+	program.rel_address = program.fetched_byte as i8;
 	if program.flag_overflow {
 		branch(program);
 	}
@@ -154,7 +162,8 @@ pub fn CPY(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn DEC(program: &mut Program, _amode: &AddressMode) {
-	let result = program.get_memory(program.abs_address) - 1;
+	let mut result = program.get_memory(program.abs_address);
+	result = result.wrapping_sub(1);
 	program.set_memory(program.abs_address, result);
 
 	program.flag_negative = (result as i8) < 0;
@@ -162,14 +171,14 @@ pub fn DEC(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn DEX(program: &mut Program, _amode: &AddressMode) {
-	program.reg_x -= 1;
+	program.reg_x = program.reg_x.wrapping_sub(1);
 	
 	program.flag_negative = (program.reg_x as i8) < 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn DEY(program: &mut Program, _amode: &AddressMode) {
-	program.reg_y -= 1;
+	program.reg_y = program.reg_y.wrapping_sub(1);
 	
 	program.flag_negative = (program.reg_y as i8) < 0;
 	program.flag_zero = program.reg_y == 0;
@@ -184,7 +193,8 @@ pub fn EOR(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn INC(program: &mut Program, _amode: &AddressMode) {
-	let result = program.get_memory(program.abs_address) + 1;
+	let mut result = program.get_memory(program.abs_address);
+	result = result.wrapping_add(1);
 	program.set_memory(program.abs_address, result);
 
 	program.flag_negative = (result as i8) < 0;
@@ -192,14 +202,14 @@ pub fn INC(program: &mut Program, _amode: &AddressMode) {
 }
 
 pub fn INX(program: &mut Program, _amode: &AddressMode) {
-	program.reg_x += 1;
+	program.reg_x = program.reg_x.wrapping_add(1);
 
 	program.flag_negative = (program.reg_x as i8) < 0;
 	program.flag_zero = program.reg_x == 0;
 }
 
 pub fn INY(program: &mut Program, _amode: &AddressMode) {
-	program.reg_y += 1;
+	program.reg_y = program.reg_y.wrapping_add(1);
 
 	program.flag_negative = (program.reg_y as i8) < 0;
 	program.flag_zero = program.reg_y == 0;

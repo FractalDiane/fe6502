@@ -18,6 +18,7 @@ pub struct Program {
 	pub fetched_byte: u8,
 	pub abs_address: u16,
 	pub rel_address: i8,
+	pub ind_address: u16,
 
 	pub memory: Vec<u8>,
 }
@@ -35,6 +36,7 @@ impl Program {
 			fetched_byte: 0,
 			abs_address: 0,
 			rel_address: 0,
+			ind_address: 0,
 
 			flag_negative: false,
 			flag_overflow: false,
