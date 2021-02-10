@@ -108,8 +108,10 @@ pub fn BPL(program: &mut Program, _amode: &AddressMode) {
 	}
 }
 
-pub fn BRK(program: &mut Program, _amode: &AddressMode) {
-	program.brk();
+pub fn BRK(program: &mut Program, amode: &AddressMode) {
+	program.stack_push((program.program_counter + 2) as u8);
+	program.stack_push((program.program_counter + 3) as u8);
+	PHP(program, amode);
 	program.flag_break = true;
 }
 
@@ -349,8 +351,11 @@ pub fn ROR(program: &mut Program, amode: &AddressMode) {
 	program.flag_carry = result > prev;
 }
 
-pub fn RTI(program: &mut Program, _amode: &AddressMode) {
-	// todo
+pub fn RTI(program: &mut Program, amode: &AddressMode) {
+	PLP(program, amode);
+	let hi = program.stack_pull();
+	let lo = program.stack_pull();
+	program.program_counter = make_u16(lo, hi);
 }
 
 pub fn RTS(program: &mut Program, _amode: &AddressMode) {
