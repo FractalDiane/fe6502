@@ -20,6 +20,7 @@ pub struct Program {
 	pub rel_address: i8,
 	pub ind_address: u16,
 
+	pub origin: u16,
 	pub memory: Vec<u8>,
 }
 
@@ -46,6 +47,7 @@ impl Program {
 			flag_carry: false,
 			flag_break: false,
 
+			origin: 0,
 			memory: vec![0; std::u16::MAX as usize + 1],
 		}
 	}

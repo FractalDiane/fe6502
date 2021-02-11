@@ -3,6 +3,7 @@ extern crate num_derive;
 extern crate lazy_static;
 extern crate strum_macros;
 
+use std::io::{self, Write};
 use std::fs::File;
 use std::{env, process};
 //use fltk::{app::*, window::*, button::*, frame::*};
@@ -16,18 +17,10 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use program::Program;
 use num::FromPrimitive;
 use opcodes::{Opcode, INSTRUCTION_DATA};
-use addressing::{AddressMode, ADDRESS_FUNCS};
+use addressing::{ADDRESS_FUNCS, AddressMode};
 
-fn main() {
-	let args: Vec<String> = env::args().collect();
-	if args.len() != 2 {
-		process::exit(1);
-	}
-
-	// Load program into memory
-	let mut file = File::open(&args[1])
-					.expect(format!("Failed to open file {}", &args[1]).as_str());
-
+fn load_program_file(filename: &String) -> Program {
+	let mut file = File::open(filename).expect(format!("Failed to open file {}", filename).as_str());
 	let mut program = Program::new();
 
 	let origin = file.read_u16::<LittleEndian>().unwrap();
@@ -44,9 +37,12 @@ fn main() {
 	}
 
 	program.program_counter = origin;
+	program.origin = origin;
+	program
+}
 
-	// Run program
-	println!("Running program from ${:x}", origin);
+fn run_program(program: &mut Program) {
+	println!("Running program from ${:x}", program.origin);
 	loop {
 		let addr = program.program_counter;
 
@@ -56,7 +52,7 @@ fn main() {
 		
 		let instr_data = &INSTRUCTION_DATA[&opcode];
 		let addr_func = ADDRESS_FUNCS[&instr_data.amode];
-		addr_func(&mut program);
+		addr_func(program);
 
 		{
 			let opcode_str = opcode.to_string();
@@ -121,11 +117,11 @@ fn main() {
 			println!("{:32} {}{}", string, string_2, con_reset!());
 		}
 
-		(instr_data.func)(&mut program, &instr_data.amode);
+		(instr_data.func)(program, &instr_data.amode);
 
-		let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
 		
 		{
+			let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
 			println!("A    X    Y     N V B D I Z C");
 			println!("{:<5}{:<5}{:<5} {} {} {} {} {} {} {}\n",
 				program.reg_a, program.reg_x, program.reg_y,
@@ -138,6 +134,65 @@ fn main() {
 			if program.flag_break {
 				println!("BREAK at ${:x}", addr);
 				return;
+			}
+		}
+	}
+}
+
+fn main() {
+	let mut program = Program::new();
+
+	// Argument checks
+	let args: Vec<String> = env::args().collect();
+	let mut i = 1;
+	while i < args.len() {
+		match args[i].as_str() {
+			"-l" => { // Load file
+				program = load_program_file(&args[i + 1]);
+				i += 1;
+			},
+
+			"-g" => {
+				eprintln!("{}Error:{} GUI not yet supported", con_red!(), con_reset!());
+				process::exit(1);
+			}
+
+			_ => {
+				println!("Unknown parameter \"{}\"", args[i]);
+			}
+		}
+
+		i += 1;
+	}
+
+	let mut input = String::new();
+	loop {
+		input.clear();
+		io::stdout().flush().unwrap();
+		io::stdin().read_line(&mut input).unwrap();
+
+		let trimmed = input.trim_start().trim_end().trim_matches('\n').to_lowercase();
+		let result = trimmed.as_str();
+		let vec = result.split_whitespace().collect::<Vec<&str>>();
+		match vec[0] {
+			"load" => {
+				program = load_program_file(&String::from(vec[1]));
+			},
+
+			"run" => {
+				run_program(&mut program);
+			},
+
+			"gui" => {
+				eprintln!("{}Error:{} GUI not yet supported", con_red!(), con_reset!());
+			},
+
+			"exit" => {
+				break;
+			},
+
+			_ => {
+				eprintln!("{}Error:{} Invalid command", con_red!(), con_reset!());
 			}
 		}
 	}
