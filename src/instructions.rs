@@ -149,19 +149,19 @@ pub fn CLV(program: &mut Program, _amode: &AddressMode) {
 pub fn CMP(program: &mut Program, _amode: &AddressMode) {
 	program.flag_zero = program.reg_a == program.fetched_byte;
 	program.flag_carry = program.reg_a > program.fetched_byte || program.reg_a == program.fetched_byte;
-	program.flag_negative = ((program.reg_a - program.fetched_byte) >> 7) == 1;
+	program.flag_negative = (program.reg_a.wrapping_sub(program.fetched_byte) >> 7) == 1;
 }
 
 pub fn CPX(program: &mut Program, _amode: &AddressMode) {
 	program.flag_zero = program.reg_x == program.fetched_byte;
 	program.flag_carry = program.reg_x > program.fetched_byte || program.reg_x == program.fetched_byte;
-	program.flag_negative = ((program.reg_x - program.fetched_byte) >> 7) == 1;
+	program.flag_negative = (program.reg_x.wrapping_sub(program.fetched_byte) >> 7) == 1;
 }
 
 pub fn CPY(program: &mut Program, _amode: &AddressMode) {
 	program.flag_zero = program.reg_y == program.fetched_byte;
 	program.flag_carry = program.reg_y > program.fetched_byte || program.reg_y == program.fetched_byte;
-	program.flag_negative = ((program.reg_y - program.fetched_byte) >> 7) == 1;
+	program.flag_negative = (program.reg_y.wrapping_sub(program.fetched_byte) >> 7) == 1;
 }
 
 pub fn DEC(program: &mut Program, _amode: &AddressMode) {

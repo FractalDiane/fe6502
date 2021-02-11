@@ -92,10 +92,40 @@ fn main() {
 				_ => {}
 			}
 
-			println!("{}{}", string, con_reset!());
+			let mut string_2 = String::from(con_red!());
 
-			let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
-			
+			match instr_data.amode {
+				AddressMode::Implied | AddressMode::Accumulator => {
+					string_2 += format!(" (${:02x})", byte).as_str();
+				},
+				AddressMode::Immediate => {
+					string_2 += format!(" (${:02x} ${:02x})", byte, program.fetched_byte).as_str();
+				}
+				AddressMode::Zeropage | AddressMode::ZeropageX | AddressMode::ZeropageY => {
+					string_2 += format!(" (${:02x} ${:02x})", byte, program.abs_address).as_str();
+				},
+				AddressMode::Absolute | AddressMode::AbsoluteX | AddressMode::AbsoluteY => {
+					string_2 += format!(" (${:02x} ${:02x} ${:02x})", byte, program.abs_address & 0xff, program.abs_address >> 8).as_str();
+				},
+				AddressMode::Indirect => {
+					string_2 += format!(" (${:02x} ${:02x} ${:02x})", byte, program.ind_address & 0xff, program.ind_address >> 8).as_str();
+				}
+				AddressMode::IndirectX | AddressMode::IndirectY => {
+					string_2 += format!(" (${:02x} ${:02x})", byte, program.ind_address).as_str();
+				}
+				AddressMode::Relative => {
+					string_2 += format!(" (${:02x} ${:02x})", byte, program.rel_address).as_str();
+				}
+			}
+
+			println!("{:32} {}{}", string, string_2, con_reset!());
+		}
+
+		(instr_data.func)(&mut program, &instr_data.amode);
+
+		let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
+		
+		{
 			println!("A    X    Y     N V B D I Z C");
 			println!("{:<5}{:<5}{:<5} {} {} {} {} {} {} {}\n",
 				program.reg_a, program.reg_x, program.reg_y,
@@ -104,12 +134,11 @@ fn main() {
 				symbols[program.flag_interrupt as usize], symbols[program.flag_zero as usize],
 				symbols[program.flag_carry as usize]
 			);
-		}
 
-		(instr_data.func)(&mut program, &instr_data.amode);
-		if program.flag_break {
-			println!("BREAK at ${:x}", addr);
-			return;
+			if program.flag_break {
+				println!("BREAK at ${:x}", addr);
+				return;
+			}
 		}
 	}
 }
