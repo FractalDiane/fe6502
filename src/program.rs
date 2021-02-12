@@ -22,6 +22,9 @@ pub struct Program {
 
 	pub origin: u16,
 	pub memory: Vec<u8>,
+
+	pub breakpoints: Vec<u16>,
+	pub broken: bool,
 }
 
 
@@ -49,6 +52,9 @@ impl Program {
 
 			origin: 0,
 			memory: vec![0; std::u16::MAX as usize + 1],
+
+			breakpoints: Vec::new(),
+			broken: false,
 		}
 	}
 
@@ -73,5 +79,9 @@ impl Program {
 		let ptr = self.stack_pointer;
 		self.stack_pointer = self.stack_pointer.wrapping_add(1);
 		self.memory[ptr as usize]
+	}
+
+	pub fn add_breakpoint(&mut self, breakpoint: u16) {
+		self.breakpoints.push(breakpoint);
 	}
 }

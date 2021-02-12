@@ -3,21 +3,42 @@ extern crate num_derive;
 extern crate lazy_static;
 extern crate strum_macros;
 
-use std::io::{self, Write};
-use std::fs::File;
-use std::{env, process};
-//use fltk::{app::*, window::*, button::*, frame::*};
-
+#[macro_use]
+mod console_colors;
 mod addressing;
 mod opcodes;
 mod instructions;
 mod program;
-mod console_colors;
+mod debug;
+
+use std::io::{self, Write};
+use std::fs::File;
+use std::{env, process};
+use std::u16;
+
+use crate::program::Program;
+use crate::opcodes::{INSTRUCTION_DATA, Opcode};
+use crate::addressing::ADDRESS_FUNCS;
+
 use byteorder::{LittleEndian, ReadBytesExt};
-use program::Program;
 use num::FromPrimitive;
-use opcodes::{Opcode, INSTRUCTION_DATA};
-use addressing::{ADDRESS_FUNCS, AddressMode};
+//use fltk::{app::*, window::*, button::*, frame::*};
+
+// =======================================================================
+
+fn get_input_args(input: &String) -> Vec<String> {
+	let trimmed = input.trim_start().trim_end().trim_matches('\n').to_lowercase();
+	let result = trimmed.as_str();
+	
+	let mut vec = Vec::<String>::new();
+	for st in result.split_whitespace() {
+		vec.push(String::from(st));
+	}
+
+	vec
+}
+
+// =======================================================================
 
 fn load_program_file(filename: &String) -> Program {
 	let mut file = File::open(filename).expect(format!("Failed to open file {}", filename).as_str());
@@ -41,103 +62,85 @@ fn load_program_file(filename: &String) -> Program {
 	program
 }
 
-fn run_program(program: &mut Program) {
+fn run_program(program: &mut Program, debug_mode: bool) -> bool {
 	println!("Running program from ${:x}", program.origin);
+	program.program_counter = program.origin;
+	program.flag_break = false;
 	loop {
 		let addr = program.program_counter;
 
 		let byte = program.get_memory(program.program_counter);
 		program.advance_counter();
-		let opcode: Opcode = FromPrimitive::from_u8(byte).unwrap();
+		let opcode_test = FromPrimitive::from_u8(byte);
+		let opcode: Opcode;
+		match opcode_test {
+			None => {
+				eprintln!("{}Error:{} Invalid opcode (${:x})", con_red!(), con_reset!(), byte);
+				return false;
+			},
+			Some(oc) => {
+				opcode = oc;
+			}
+		}
 		
 		let instr_data = &INSTRUCTION_DATA[&opcode];
 		let addr_func = ADDRESS_FUNCS[&instr_data.amode];
 		addr_func(program);
 
-		{
-			let opcode_str = opcode.to_string();
-			let mut string = format!("${:x}: {}{}{}", addr, con_yellow!(), &opcode_str[0..3], con_green!());
-			match instr_data.amode {
-				AddressMode::Accumulator => {
-					string += " A";
-				},
-				AddressMode::Immediate => {
-					string += format!(" #${:x}", program.fetched_byte).as_str();
-				},
-				AddressMode::Absolute | AddressMode::Zeropage => {
-					string += format!(" ${:x}", program.abs_address).as_str();
-				},
-				AddressMode::AbsoluteX | AddressMode::ZeropageX => {
-					string += format!(" ${:x},X", program.abs_address).as_str();
-				},
-				AddressMode::AbsoluteY | AddressMode::ZeropageY => {
-					string += format!(" ${:x},Y", program.abs_address).as_str();
-				},
-				AddressMode::Relative => {
-					string += format!(" ${:x}", program.program_counter.wrapping_add(program.rel_address as u16)).as_str();
-				},
-				AddressMode::Indirect => {
-					string += format!(" (${:x})", program.ind_address).as_str();
-				},
-				AddressMode::IndirectX => {
-					string += format!(" (${:x},X)", program.ind_address).as_str();
-				},
-				AddressMode::IndirectY => {
-					string += format!(" (${:x}),Y", program.ind_address).as_str();
-				},
-				_ => {}
+		debug::print_instruction(program, addr, byte, &opcode, instr_data);
+
+		let contains = program.breakpoints.contains(&addr);
+		if debug_mode && (contains || program.broken) {
+			if contains {
+				println!("BREAKPOINT at ${:x}", addr);
 			}
+			
+			program.broken = true;
+			let mut input = String::new();
+			loop {
+				input.clear();
+				io::stdout().flush().unwrap();
+				io::stdin().read_line(&mut input).unwrap();
 
-			let mut string_2 = String::from(con_red!());
+				let cmd_args = get_input_args(&input);
 
-			match instr_data.amode {
-				AddressMode::Implied | AddressMode::Accumulator => {
-					string_2 += format!(" (${:02x})", byte).as_str();
-				},
-				AddressMode::Immediate => {
-					string_2 += format!(" (${:02x} ${:02x})", byte, program.fetched_byte).as_str();
-				}
-				AddressMode::Zeropage | AddressMode::ZeropageX | AddressMode::ZeropageY => {
-					string_2 += format!(" (${:02x} ${:02x})", byte, program.abs_address).as_str();
-				},
-				AddressMode::Absolute | AddressMode::AbsoluteX | AddressMode::AbsoluteY => {
-					string_2 += format!(" (${:02x} ${:02x} ${:02x})", byte, program.abs_address & 0xff, program.abs_address >> 8).as_str();
-				},
-				AddressMode::Indirect => {
-					string_2 += format!(" (${:02x} ${:02x} ${:02x})", byte, program.ind_address & 0xff, program.ind_address >> 8).as_str();
-				}
-				AddressMode::IndirectX | AddressMode::IndirectY => {
-					string_2 += format!(" (${:02x} ${:02x})", byte, program.ind_address).as_str();
-				}
-				AddressMode::Relative => {
-					string_2 += format!(" (${:02x} ${:02x})", byte, program.rel_address).as_str();
+				match cmd_args[0].as_str() {
+					"continue" => {
+						program.broken = false;
+						break;
+					},
+
+					"step" => {
+						break;
+					},
+
+					"stop" => {
+						return true;
+					}
+
+					"memory" | "mem" => {
+						debug::print_memory(&program, &cmd_args);
+					},
+
+					_ => {
+						eprintln!("{}Error:{} Invalid command", con_red!(), con_reset!());
+					},
 				}
 			}
-
-			println!("{:32} {}{}", string, string_2, con_reset!());
 		}
 
 		(instr_data.func)(program, &instr_data.amode);
 
-		
-		{
-			let symbols = [format!("{}{}{}", con_red!(), "-", con_reset!()), format!("{}{}{}", con_green!(), "+", con_reset!())];
-			println!("A    X    Y     N V B D I Z C");
-			println!("{:<5}{:<5}{:<5} {} {} {} {} {} {} {}\n",
-				program.reg_a, program.reg_x, program.reg_y,
-				symbols[program.flag_negative as usize], symbols[program.flag_overflow as usize],
-				symbols[program.flag_break as usize], symbols[program.flag_decimal as usize],
-				symbols[program.flag_interrupt as usize], symbols[program.flag_zero as usize],
-				symbols[program.flag_carry as usize]
-			);
+		debug::print_status(program);
 
-			if program.flag_break {
-				println!("BREAK at ${:x}", addr);
-				return;
-			}
+		if program.flag_break {
+			println!("BREAK at ${:x}", addr);
+			return true;
 		}
 	}
 }
+
+// =======================================================================
 
 fn main() {
 	let mut program = Program::new();
@@ -152,14 +155,14 @@ fn main() {
 				i += 1;
 			},
 
-			"-g" => {
+			"-g" => { // Launch with GUI
 				eprintln!("{}Error:{} GUI not yet supported", con_red!(), con_reset!());
 				process::exit(1);
-			}
+			},
 
 			_ => {
 				println!("Unknown parameter \"{}\"", args[i]);
-			}
+			},
 		}
 
 		i += 1;
@@ -171,16 +174,29 @@ fn main() {
 		io::stdout().flush().unwrap();
 		io::stdin().read_line(&mut input).unwrap();
 
-		let trimmed = input.trim_start().trim_end().trim_matches('\n').to_lowercase();
-		let result = trimmed.as_str();
-		let vec = result.split_whitespace().collect::<Vec<&str>>();
-		match vec[0] {
+		let cmd_args = get_input_args(&input);
+		match cmd_args[0].as_str() {
 			"load" => {
-				program = load_program_file(&String::from(vec[1]));
+				program = load_program_file(&cmd_args[1]);
+			},
+
+			"breakpoint" | "bkpt" => {
+				let addr_str = &cmd_args[1];
+				let addr = u16::from_str_radix(addr_str.trim_start_matches('$'), 16).unwrap();
+				program.add_breakpoint(addr);
+				println!("Breakpoint set at {}${:x}{}", con_red!(), addr, con_reset!());
 			},
 
 			"run" => {
-				run_program(&mut program);
+				run_program(&mut program, false);
+			},
+
+			"debug" | "db" | "dbg" => {
+				run_program(&mut program, true);
+			},
+
+			"memory" | "mem" => {
+				debug::print_memory(&program, &cmd_args);
 			},
 
 			"gui" => {
