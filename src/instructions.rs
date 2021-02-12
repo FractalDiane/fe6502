@@ -220,7 +220,6 @@ pub fn INY(program: &mut Program, _amode: &AddressMode) {
 
 pub fn JMP(program: &mut Program, _amode: &AddressMode) {
 	program.program_counter = program.abs_address;
-	// Replicate indirect addressing bug here later
 }
 
 pub fn JSR(program: &mut Program, _amode: &AddressMode) {

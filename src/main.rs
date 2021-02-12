@@ -140,6 +140,21 @@ fn run_program(program: &mut Program, debug_mode: bool) -> bool {
 	}
 }
 
+fn print_help() {
+	println!("\n{0}load {1}[filename]    {2}Load a program file
+{0}breakpoint {1}[address]    {2}Set breakpoint at address
+{0}run    {2}Run program
+{0}debug    {2}Run program in debug mode, stopping at breakpoints
+{0}memory {1}[from] [range]    {2}Prints contents of memory at address and [range] addresses afterward
+{0}gui    {2}Launch GUI (Not yet implemented)
+{0}help    {2}Print this help text
+{0}exit    {2}Exit fe6502\n", con_green!(), con_yellow!(), con_reset!());
+}
+
+fn print_help_debugger() {
+	
+}
+
 // =======================================================================
 
 fn main() {
@@ -170,6 +185,7 @@ fn main() {
 
 	let mut input = String::new();
 	loop {
+		print!("{}fe6502{}> ", con_green!(), con_reset!());
 		input.clear();
 		io::stdout().flush().unwrap();
 		io::stdin().read_line(&mut input).unwrap();
@@ -201,6 +217,10 @@ fn main() {
 
 			"gui" => {
 				eprintln!("{}Error:{} GUI not yet supported", con_red!(), con_reset!());
+			},
+
+			"help" => {
+				print_help();
 			},
 
 			"exit" => {

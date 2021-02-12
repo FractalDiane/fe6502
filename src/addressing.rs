@@ -98,7 +98,7 @@ pub fn addr_absolute_x(program: &mut Program) {
 	let lo = fetch_byte(program);
 	let hi = fetch_byte(program);
 	let addr = make_u16(lo, hi);
-	program.abs_address = addr;
+	program.abs_address = addr + program.reg_x as u16;
 	program.fetched_byte = program.get_memory(addr + program.reg_x as u16);
 }
 
@@ -106,18 +106,24 @@ pub fn addr_absolute_y(program: &mut Program) {
 	let lo = fetch_byte(program);
 	let hi = fetch_byte(program);
 	let addr = make_u16(lo, hi);
-	program.abs_address = addr;
+	program.abs_address = addr + program.reg_y as u16;
 	program.fetched_byte = program.get_memory(addr + program.reg_y as u16);
 }
 
 pub fn addr_indirect(program: &mut Program) {
-	let byte = fetch_byte(program);
-	program.ind_address = byte as u16;
-	let lo = program.get_memory(byte as u16);
-	let hi = program.get_memory(byte as u16 + 1);
+	let lo = fetch_byte(program);
+	let hi = fetch_byte(program);
 	let addr = make_u16(lo, hi);
-	program.abs_address = addr;
-	program.fetched_byte = program.get_memory(addr);
+	program.ind_address = addr;
+
+	let lo_abs = program.get_memory(addr);
+	
+	// REPLICATE PAGE CHANGE BUG
+	let hi_abs = if lo == 0xff { program.get_memory(addr + 1 - 0xff) } else { program.get_memory(addr + 1) };
+
+	let addr_abs = make_u16(lo_abs, hi_abs);
+	program.abs_address = addr_abs;
+	program.fetched_byte = program.get_memory(addr_abs);
 }
 
 pub fn addr_x_indirect(program: &mut Program) {
